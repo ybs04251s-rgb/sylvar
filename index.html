@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SYLVAR — Beyond the Sylvan Silver</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Montserrat:wght@200;300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --black: #050505; --deep: #0c0c0c; --panel: #111111;
+      --gold: #b89a6a; --gold-light: #d4b896; --cream: #f0e8dc;
+      --muted: #a09880; --border: rgba(184,154,106,0.18);
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--black); color: var(--cream); font-family: 'Montserrat', sans-serif; font-weight: 300; overflow-x: hidden; cursor: none; }
+
+    .cursor { position: fixed; top: 0; left: 0; z-index: 9999; pointer-events: none; mix-blend-mode: difference; }
+    .cursor-dot { width: 6px; height: 6px; background: var(--gold-light); border-radius: 50%; transform: translate(-50%, -50%); }
+    .cursor-ring { position: fixed; top: 0; left: 0; width: 36px; height: 36px; border: 1px solid rgba(184,154,106,0.5); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%, -50%); transition: width 0.2s, height 0.2s, border-color 0.2s; }
+    .cursor-ring.hover { width: 56px; height: 56px; border-color: var(--gold); }
+
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 900; display: flex; align-items: center; justify-content: space-between; padding: 28px 56px; transition: background 0.5s, padding 0.4s; }
+    .nav.scrolled { background: rgba(5,5,5,0.92); backdrop-filter: blur(12px); padding: 18px 56px; border-bottom: 1px solid var(--border); }
+    .nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 400; letter-spacing: 0.3em; color: var(--cream); text-decoration: none; text-shadow: 0 0 30px rgba(184,154,106,0.4); }
+    .nav-links { display: flex; gap: 40px; list-style: none; }
+    .nav-links a { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(240,232,220,0.9); text-decoration: none; transition: color 0.3s; position: relative; }
+    .nav-links a::after { content: ''; position: absolute; bottom: -4px; left: 0; right: 0; height: 1px; background: var(--gold); transform: scaleX(0); transform-origin: right; transition: transform 0.35s ease; }
+    .nav-links a:hover { color: var(--cream); }
+    .nav-links a:hover::after { transform: scaleX(1); transform-origin: left; }
+    .nav-toggle { display: none; flex-direction: column; gap: 5px; cursor: pointer; }
+    .nav-toggle span { display: block; width: 24px; height: 1px; background: var(--cream); }
+
+    .hero { position: relative; height: 100vh; min-height: 640px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .hero-video-wrap { position: absolute; inset: 0; }
+    .hero-video { width: 100%; height: 100%; object-fit: cover; filter: brightness(1.0) saturate(0.9); }
+    .hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(5,5,5,0.1) 0%, rgba(5,5,5,0.05) 40%, rgba(5,5,5,0.5) 80%, var(--black) 100%); }
+    .hero-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 16px; animation: heroIn 1.8s cubic-bezier(0.16,1,0.3,1) both; width: 100%; padding: 0 5vw; }
+    @keyframes heroIn { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+    .hero-eyebrow { font-size: 0.6rem; letter-spacing: 0.4em; text-transform: uppercase; color: var(--gold); }
+    .hero-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(3.5rem, 8vw, 7rem); font-weight: 300; line-height: 1.05; letter-spacing: 0.02em; text-align: center; }
+    .hero-title em { font-style: italic; color: var(--gold-light); }
+    .hero-sub { font-size: 0.88rem; letter-spacing: 0.15em; color: rgba(240,232,220,0.9); line-height: 1.8; align-self: flex-start; padding-left: calc(50% - 11rem); }
+    .hero-cta-group { display: flex; gap: 16px; margin-top: 180px; align-self: flex-end; padding-right: 8vw; }
+    .btn { display: inline-block; text-decoration: none; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; padding: 14px 32px; transition: all 0.35s; }
+    .btn-primary { background: var(--gold); color: var(--black); }
+    .btn-primary:hover { background: var(--gold-light); }
+    .btn-secondary { border: 1px solid rgba(184,154,106,0.4); color: var(--cream); }
+    .btn-secondary:hover { border-color: var(--gold); color: var(--gold-light); }
+    .hero-scroll { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 0.55rem; letter-spacing: 0.3em; color: var(--muted); text-transform: uppercase; }
+    .scroll-line { width: 1px; height: 50px; background: linear-gradient(to bottom, var(--gold), transparent); animation: scrollPulse 2s ease-in-out infinite; }
+    @keyframes scrollPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+    section { position: relative; }
+    .section-inner { max-width: 1140px; margin: 0 auto; padding: 0 40px; }
+    .section-label { font-size: 0.55rem; letter-spacing: 0.4em; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; display: flex; align-items: center; gap: 16px; }
+    .section-label::before { content: ''; display: block; width: 32px; height: 1px; background: var(--gold); }
+    .section-heading { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 300; line-height: 1.1; letter-spacing: 0.02em; }
+    .section-heading em { font-style: italic; color: var(--gold-light); }
+
+    #about { padding: 140px 0 120px; }
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; margin-top: 64px; }
+    .about-text p { font-size: 0.88rem; line-height: 2.1; color: rgba(240,232,220,0.9); margin-bottom: 20px; }
+    .about-text p strong { color: var(--cream); font-weight: 400; }
+    .about-visual { position: relative; aspect-ratio: 4/5; background: var(--panel); border: 1px solid var(--border); overflow: hidden; }
+    .about-visual-inner { position: absolute; inset: 0; background: linear-gradient(135deg, #1a1209 0%, #0c0a07 50%, #161006 100%); display: flex; align-items: center; justify-content: center; }
+    .about-monogram { font-family: 'Cormorant Garamond', serif; font-size: 8rem; font-weight: 300; font-style: italic; color: rgba(184,154,106,0.12); user-select: none; }
+    .about-line { position: absolute; bottom: 0; left: 0; right: 0; padding: 28px 32px; background: linear-gradient(to top, rgba(5,5,5,0.9) 0%, transparent 100%); }
+    .about-line-text { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-style: italic; color: var(--gold-light); letter-spacing: 0.05em; }
+
+    #collection { padding: 120px 0; background: var(--deep); }
+    .collection-intro { text-align: center; margin-bottom: 80px; }
+    .collection-intro .section-label { justify-content: center; }
+    .collection-intro .section-label::before { display: none; }
+    .collection-intro p { margin-top: 24px; font-size: 0.82rem; color: rgba(240,232,220,0.85); letter-spacing: 0.08em; line-height: 1.9; max-width: 480px; margin-inline: auto; }
+    .products { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+    .product-card { position: relative; aspect-ratio: 3/4; overflow: hidden; background: var(--panel); cursor: pointer; transition: transform 0.5s cubic-bezier(0.16,1,0.3,1); }
+    .product-card:hover { transform: scale(0.985); }
+    .product-bg { position: absolute; inset: 0; transition: transform 0.8s cubic-bezier(0.16,1,0.3,1); }
+    .product-card:hover .product-bg { transform: scale(1.06); }
+    .product-bg-1 { background: linear-gradient(145deg, #0e1209 0%, #1a1e10 35%, #0c1308 60%, #080f07 100%); }
+    .product-bg-2 { background: linear-gradient(145deg, #130e08 0%, #1e1508 35%, #14100a 60%, #0f0b07 100%); }
+    .product-deco { position: absolute; border-radius: 50%; border: 1px solid rgba(184,154,106,0.08); transition: transform 0.8s ease, opacity 0.5s; }
+    .product-card:hover .product-deco { opacity: 0.18; transform: scale(1.1); }
+    .deco-1 { width: 260px; height: 260px; top: -60px; right: -80px; }
+    .deco-2 { width: 380px; height: 380px; top: -130px; right: -160px; border-color: rgba(184,154,106,0.04); }
+    .deco-3 { width: 160px; height: 160px; bottom: 60px; left: -40px; }
+    .product-content { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 48px 44px; background: linear-gradient(to top, rgba(5,5,5,0.85) 0%, rgba(5,5,5,0.2) 50%, transparent 100%); }
+    .product-num { position: absolute; top: 36px; left: 44px; font-size: 0.55rem; letter-spacing: 0.35em; color: var(--gold); text-transform: uppercase; }
+    .product-name { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 300; letter-spacing: 0.04em; line-height: 1.1; }
+    .product-type { font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); margin-top: 8px; }
+    .product-notes { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .note-tag { font-size: 0.55rem; letter-spacing: 0.15em; padding: 4px 10px; border: 1px solid rgba(184,154,106,0.25); color: rgba(240,232,220,0.85); text-transform: uppercase; }
+    .product-cta { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--cream); text-decoration: none; border-bottom: 1px solid rgba(184,154,106,0.4); padding-bottom: 2px; opacity: 0; transform: translateY(8px); transition: opacity 0.35s, transform 0.35s, color 0.3s; }
+    .product-card:hover .product-cta { opacity: 1; transform: translateY(0); }
+    .product-cta:hover { color: var(--gold-light); border-color: var(--gold); }
+
+    #philosophy { padding: 120px 0; background: var(--deep); text-align: center; }
+    .philosophy-quote { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 4vw, 3.2rem); font-weight: 300; font-style: italic; line-height: 1.4; max-width: 800px; margin: 0 auto; letter-spacing: 0.02em; }
+    .philosophy-quote span { color: var(--gold-light); }
+    .philosophy-attr { margin-top: 32px; font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); }
+    .philosophy-divider { width: 1px; height: 80px; background: linear-gradient(to bottom, transparent, var(--gold), transparent); margin: 60px auto; }
+
+    #store { padding: 120px 0; }
+
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.22s; }
+
+    .mobile-nav { display: none; position: fixed; inset: 0; z-index: 800; background: rgba(5,5,5,0.97); backdrop-filter: blur(16px); flex-direction: column; align-items: center; justify-content: center; gap: 40px; }
+    .mobile-nav.open { display: flex; }
+    .mobile-nav a { font-family: 'Cormorant Garamond', serif; font-size: 2.5rem; font-weight: 300; font-style: italic; color: var(--cream); text-decoration: none; transition: color 0.3s; }
+    .mobile-nav a:hover { color: var(--gold-light); }
+
+    footer { padding: 48px 56px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 300; letter-spacing: 0.3em; color: rgba(240,232,220,0.85); }
+    .footer-copy { font-size: 0.55rem; letter-spacing: 0.15em; color: var(--muted); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 0.55rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); text-decoration: none; transition: color 0.3s; }
+    .footer-links a:hover { color: var(--gold); }
+
+    @media (max-width: 900px) {
+      .nav { padding: 22px 28px; } .nav.scrolled { padding: 16px 28px; }
+      .nav-links { display: none; } .nav-toggle { display: flex; }
+      .about-grid { grid-template-columns: 1fr; gap: 48px; }
+      .products { grid-template-columns: 1fr; }
+      footer { flex-direction: column; gap: 20px; text-align: center; padding: 36px 28px; }
+      .footer-links { flex-wrap: wrap; justify-content: center; }
+      .section-inner { padding: 0 24px; }
+      #about, #store, #collection, #philosophy { padding: 80px 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cursor"><div class="cursor-dot" id="cursor-dot"></div></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<div class="mobile-nav" id="mobile-nav">
+  <a href="#about" onclick="closeMobileNav()">About</a>
+  <a href="#collection" onclick="closeMobileNav()">Collection</a>
+  <a href="#store" onclick="closeMobileNav()">Store</a>
+</div>
+
+<header class="nav" id="nav">
+  <a class="nav-logo" href="#">SYLVAR</a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#collection">Collection</a></li>
+    <li><a href="#store">Store</a></li>
+  </ul>
+  <div class="nav-toggle" onclick="toggleMobileNav()">
+    <span></span><span></span><span></span>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-video-wrap">
+    <video autoplay muted loop playsinline class="hero-video" poster="assets/placeholder.jpg">
+      <source src="assets/sylvar-main-22s.webm" type="video/webm">
+      <source src="assets/sylvar-main-22s.mp4" type="video/mp4">
+    </video>
+    <div class="hero-overlay"></div>
+  </div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">Eau de Parfum — 2026</p>
+    <h1 class="hero-title">Beyond the <em>Sylvan Silver</em></h1>
+    <p class="hero-sub">숲의 은빛 경계를 넘어, 기억에 새겨지는 향의 여정</p>
+    <div class="hero-cta-group">
+      <a href="#collection" class="btn btn-primary">컬렉션 탐험</a>
+      <a href="#store" class="btn btn-secondary">구매하기</a>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    <span>scroll</span>
+  </div>
+</section>
+
+<section id="about">
+  <div class="section-inner">
+    <div class="reveal">
+      <p class="section-label">Our Story</p>
+      <h2 class="section-heading">향기는 기억이다,<br><em>Sylvar는 그 경계다</em></h2>
+    </div>
+    <div class="about-grid">
+      <div class="about-text reveal reveal-delay-1">
+        <p>SYLVAR는 숲(<em>Sylvan</em>)의 은빛 정수에서 태어났습니다. 자연의 원초적 아름다움과 현대적 감각의 교차점에서, 우리는 단순한 향수가 아닌 <strong>감각적 경험</strong>을 설계합니다.</p>
+        <p>각각의 향은 정교하게 선별된 원료들이 이루는 화학적 서사입니다. 피부 위에서 시간과 함께 전개되는 이 이야기는, 착용하는 이의 기억 속에 영원히 각인됩니다.</p>
+        <p>모든 제품은 ODM 방식으로 엄선된 원료를 사용하여 제작되며, <strong>50ml EDP</strong> 포맷으로 제공됩니다.</p>
+      </div>
+      <div class="about-visual reveal reveal-delay-2">
+        <div class="about-visual-inner">
+          <div class="about-monogram">S</div>
+        </div>
+        <div class="about-line">
+          <p class="about-line-text">"Wear the memory you wish to keep."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="collection">
+  <div class="collection-intro reveal">
+    <p class="section-label">Collection 2026</p>
+    <h2 class="section-heading">두 가지 세계,<br><em>하나의 철학</em></h2>
+    <p>자연과 도시, 고요와 열기 — 대립하는 두 세계가 향 안에서 하나가 됩니다.</p>
+  </div>
+  <div class="products">
+    <div class="product-card">
+      <div class="product-bg product-bg-1">
+        <div class="product-deco deco-1"></div>
+        <div class="product-deco deco-2"></div>
+        <div class="product-deco deco-3"></div>
+      </div>
+      <div class="product-content">
+        <span class="product-num">No. 01</span>
+        <h3 class="product-name">Urban Forest</h3>
+        <p class="product-type">Aromatic Spicy Woody</p>
+        <div class="product-notes">
+          <span class="note-tag">Cardamom</span>
+          <span class="note-tag">Black Pepper</span>
+          <span class="note-tag">Neroli</span>
+          <span class="note-tag">Sandalwood</span>
+        </div>
+        <a href="#store" class="product-cta">자세히 보기 →</a>
+      </div>
+    </div>
+    <div class="product-card">
+      <div class="product-bg product-bg-2">
+        <div class="product-deco deco-1"></div>
+        <div class="product-deco deco-2"></div>
+        <div class="product-deco deco-3"></div>
+      </div>
+      <div class="product-content">
+        <span class="product-num">No. 02</span>
+        <h3 class="product-name">Café Pistache</h3>
+        <p class="product-type">Sweet Nutty Floral Woody</p>
+        <div class="product-notes">
+          <span class="note-tag">Pistachio</span>
+          <span class="note-tag">Coffee</span>
+          <span class="note-tag">Almond</span>
+          <span class="note-tag">Vanilla</span>
+        </div>
+        <a href="#store" class="product-cta">자세히 보기 →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="philosophy">
+  <div class="philosophy-divider"></div>
+  <div class="section-inner">
+    <div class="reveal">
+      <p class="philosophy-quote">"향기는 눈에 보이지 않지만,<br><span>가장 오래 기억되는 언어입니다.</span>"</p>
+      <p class="philosophy-attr">— SYLVAR, 2026</p>
+    </div>
+  </div>
+  <div class="philosophy-divider"></div>
+</section>
+
+<section id="store">
+  <div class="section-inner">
+    <div class="reveal">
+      <p class="section-label">Where to Buy</p>
+      <h2 class="section-heading">당신이 있는 곳,<br><em>Sylvar가 있습니다</em></h2>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="footer-logo">SYLVAR</span>
+  <span class="footer-copy">© 2026 SYLVAR. All rights reserved.</span>
+  <div class="footer-links">
+    <a href="#">Instagram</a>
+  </div>
+</footer>
+
+<script>
+  const dot = document.getElementById('cursor-dot');
+  const ring = document.getElementById('cursor-ring');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    dot.style.left = mx + 'px'; dot.style.top = my + 'px';
+  });
+  function animRing() {
+    rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+    requestAnimationFrame(animRing);
+  }
+  animRing();
+  document.querySelectorAll('a, button, .product-card').forEach(el => {
+    el.addEventListener('mouseenter', () => ring.classList.add('hover'));
+    el.addEventListener('mouseleave', () => ring.classList.remove('hover'));
+  });
+  window.addEventListener('scroll', () => {
+    document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 60);
+  });
+  function toggleMobileNav() { document.getElementById('mobile-nav').classList.toggle('open'); }
+  function closeMobileNav() { document.getElementById('mobile-nav').classList.remove('open'); }
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
